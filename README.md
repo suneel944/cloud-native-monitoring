@@ -30,3 +30,7 @@
         ```
         pipenv install -r requirements.txt
         ```
+## Dashboard
+![Dashboard snapshot](https://user-images.githubusercontent.com/45133346/235008179-2ab0f442-311b-447d-a6bf-678fbd7a09e7.png)
+## Demo
+[Dashboard realtime metrics update](https://user-images.githubusercontent.com/45133346/235008212-890144bf-3b51-4776-a368-149dda6ae7b3.webm)
