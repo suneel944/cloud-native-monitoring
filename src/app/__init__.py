@@ -18,8 +18,8 @@ def __register_blueprints(app:Flask):
     from .blueprints.metrics.Metrics import metrics_bp
     from .blueprints.health.Health import health_bp
     from .blueprints.data_stream.Data_Stream import data_stream_bp
-    from .blueprints.favicon.Favicon import favicon_bp
-    from .blueprints.scripts.Scripts import scripts_bp
+    from .blueprints.frontend.favicon.Favicon import favicon_bp
+    from .blueprints.frontend.scripts.Scripts import scripts_bp
     
     app.register_blueprint(metrics_bp)
     app.register_blueprint(health_bp)
