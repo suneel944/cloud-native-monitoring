@@ -30,6 +30,17 @@
         ```
         pipenv install -r requirements.txt
         ```
+## Running the application locally
+ - Build the docker image
+    ```
+    docker build . -t flask/cloud-native-monitoring:latest
+    ```
+ - Use the docker compose to start running the container
+    ```
+    docker compose up
+    -OR-
+    docker compose up --build
+    ```
 ## Dashboard
 ![Dashboard snapshot](https://user-images.githubusercontent.com/45133346/235008179-2ab0f442-311b-447d-a6bf-678fbd7a09e7.png)
 ## Demo
