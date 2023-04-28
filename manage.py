@@ -1,102 +1,58 @@
-from gevent import monkey
+import click
+from app import create_app
+from flask.cli import FlaskGroup
 
-monkey.patch_all()
+app = create_app()
+cli = FlaskGroup(create_app=create_app)
 
-from flask_script import Manager, Server as _Server, Option
-from src.app import create_app
 
-manager = Manager(create_app)
-
-class Server(_Server):
-    # Custom Flask server class that extends the default Flask server class _Server
-
-    help = description = "Runs the Flask web server"
-
-    # Help and description messages for the command-line interface
-
-    def get_options(self):
-        # Define the command-line options for the Flask server
-        options = (
-            Option("-h", "--host", dest="host", default=self.host),
-            # Host address for the server
-            Option("-p", "--port", dest="port", type=int, default=self.port),
-            # Port number for the server
-            Option(
-                "-d",
-                "--debug",
-                action="store_true",
-                dest="use_debugger",
-                help=(
-                    "enable the Werkzeug debugger (DO NOT use in " "production code)"
-                ),
-                default=self.use_debugger,
-            ),
-            # Enable the Werkzeug debugger
-            Option(
-                "-D",
-                "--no-debug",
-                action="store_false",
-                dest="use_debugger",
-                help="disable the Werkzeug debugger",
-                default=self.use_debugger,
-            ),
-            # Disable the Werkzeug debugger
-            Option(
-                "-r",
-                "--reload",
-                action="store_true",
-                dest="use_reloader",
-                help=(
-                    "monitor Python files for changes (not 100%% safe "
-                    "for production use)"
-                ),
-                default=self.use_reloader,
-            ),
-            # Enable auto-reloading of the server on code changes
-            Option(
-                "-R",
-                "--no-reload",
-                action="store_false",
-                dest="use_reloader",
-                help="do not monitor Python files for changes",
-                default=self.use_reloader,
-            ),
-            # Disable auto-reloading of the server on code changes
-        )
-        return options
-
-    def __call__(self, app, host, port, use_debugger, use_reloader):
-        # Override the default behavior of the _Server class to start a Flask server
-
-        if use_debugger is None:
-            use_debugger = app.debug
-            if use_debugger is None:
-                use_debugger = True
-        # If use_debugger is not set explicitly, use the app's debug setting
-        # If the app's debug setting is not set, default to True
-
-        if use_reloader is None:
-            use_reloader = app.debug
-        # If use_reloader is not set explicitly, use the app's debug setting
-
-        app.run(
-            host=host,
-            port=port,
-            debug=use_debugger,
-            use_reloader=use_reloader,
-            **self.server_options
-        )
-
-# Start the Flask server with the given host, port, and settings
-manager.add_command("runserver", Server())
+@cli.command()
+@click.option("-h", "--host", default="0.0.0.0", help="The interface to bind to.")
+@click.option("-p", "--port", default=5000, help="The port to bind to.")
+@click.option("--debug/--no-debug", default=True, help="Enable or disable debug mode.")
+@click.option("--reload/--no-reload", default=True, help="Enable or disable automatic reloading.")
+@click.option("--workers", default=1, help="The number of worker processes.")
+@click.option("--timeout", default=120, help="The worker timeout in seconds.")
+@click.option("--max-requests", default=0, help="The maximum number of requests per worker process.")
+@click.option("--access-log/--no-access-log", default=True, help="Enable or disable access log.")
+@click.option("--worker-class", default="gevent", help="Define worker class to use with gunicorn")
+def run_server(host, port, debug, reload, workers, timeout, max_requests, access_log, worker_class):
+    """Run the Flask server."""
+    options = {
+        "bind": f"{host}:{port}",
+        "workers": workers,
+        "worker_class": worker_class,
+        "timeout": timeout,
+        "max_requests": max_requests,
+        "accesslog": "-" if access_log else None,
+        "reload": reload,
+        "debug": debug,
+    }
+    from gunicorn.app.base import BaseApplication
+    class FlaskApplication(BaseApplication):
+        def __init__(self, app, options=None):
+            self.options = options or {}
+            self.application = app
+            super().__init__()
         
+        # overriding the parent method
+        def load_config(self):
+            for k, v in self.options.items():
+                if k in self.cfg.settings and v is not None:
+                    self.cfg.set(k.lower(), v)
+        
+        # overriding the parent method
+        def load(self):
+            return self.application
+    
+    FlaskApplication(app, options).run()
+                    
+
+@cli.command
+def test():
+    """Run the tests."""
+    click.echo("Running tests...")
+
 
 if __name__ == "__main__":
-    import os
-    import sys
-    
-    if sys.argv[1] == "test" or sys.argv[1] == "lint":
-        # small hack, to ensure that Flask-Script uses the testing
-        # configuration if we are going to run the tests
-        os.environ["FLACK_CONFIG"] = "testing"
-    manager.run()
+    cli()
