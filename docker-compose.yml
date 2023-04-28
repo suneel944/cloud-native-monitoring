@@ -1,0 +1,7 @@
+version: '3.9'
+services:
+  flask_app:
+    image: flask/cloud-native-monitoring:latest
+    shm_size: 4gb
+    ports:
+      - "5000:5000"
