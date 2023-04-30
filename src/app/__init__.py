@@ -11,7 +11,7 @@ def create_app():
     return app
 
 def __register_error_handler(app: Flask):
-    from src.app.services.Errors import handle_exception
+    from app.services.handlers.Errors import handle_exception
     app.register_error_handler(Exception, handle_exception)
 
 def __register_blueprints(app:Flask):
