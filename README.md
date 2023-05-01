@@ -1,5 +1,5 @@
 # :sparkles: Cloud Native Monitoring :sparkles:
-![Build](https://github.com/<OWNER>/<REPOSITORY>/actions/workflows/<eks_deploy.yml>/badge.svg)
+![Build](https://github.com/suneel944/cloud-native-monitoring/actions/workflows/eks_deploy.yml/badge.svg)
 
 ## :ledger: Pre-requisites
 - [Install python](https://www.python.org/downloads/) ```>=``` 3.11 
