@@ -1,4 +1,5 @@
 # :sparkles: Cloud Native Monitoring :sparkles:
+![Build](https://github.com/<OWNER>/<REPOSITORY>/actions/workflows/<eks_deploy.yml>/badge.svg)
 
 ## :ledger: Pre-requisites
 - [Install python](https://www.python.org/downloads/) ```>=``` 3.11 
@@ -33,7 +34,11 @@
         ```
         pipenv install -r requirements.txt
         ```
-    - Add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to github secrets > actions > new repository secret
+    - Add the below sensitive information to github secrets > actions > new repository secret
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - EKS_CLUSTER_ROLE
+      - EKS_NODE_ROLE   
 
 ## :writing_hand: Running the application locally
  - Build the docker image
@@ -46,6 +51,17 @@
     -OR-
     docker compose up --build
     ```
+ - Run without docker
+    ```
+    python manage.py run -h <host_address> -p <port_number>
+    -OR-
+    python manage.py run
+    -OR-
+    python manage.py run
+    -OR- 
+    gunicorn app:create_app() -b <host_address:port_number> -w <number_of_workers> --worker-class gevent --timeout <max_time_before_worker_reset> --max-requests <maximum_number_of_requests>
+    ```
+    for the above command, if there is a requirement of debug, then appending debug would suffice in each
 
 ## :bulb: Fancy running your github action locally
  - Create a file called .secrets in the root directory to mimic the github secrets and store all the secrets
