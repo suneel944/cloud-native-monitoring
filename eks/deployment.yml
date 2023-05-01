@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-monitoring-app-deployment
+  labels:
+    app: cloud-monitoring-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloud-monitoring-app
+  template:
+    metadata:
+      labels:
+        app: cloud-monitoring-app
+    spec:
+      containers:
+      - name: cloud-monitoring-app
+        image: 085606762228.dkr.ecr.us-west-2.amazonaws.com/cloud-monitoring-app:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
