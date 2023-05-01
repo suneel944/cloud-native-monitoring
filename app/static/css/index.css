@@ -1,0 +1,50 @@
+.card {
+    border-radius: 6px;
+    padding: 10px;
+    width: 380px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    height: 300px;
+    text-align:justify;
+    text-rendering: geometricPrecision;
+    background-color: rgb(243, 238, 238);
+}
+
+.col {
+    padding: 30px;
+}
+
+.row {
+    align-items: start;
+    padding: 20px;
+}
+
+.card-title {
+    font-size: 25px;
+    text-align: left;
+    text-rendering: geometricPrecision;
+    font-weight: 600;
+}
+
+.header {
+    font-size: 40px;
+    text-align: center;
+    text-rendering: geometricPrecision;
+    font-weight: 600;
+    background-image: linear-gradient(to left, #403e48, #dbd4e3);
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+  }
+
+.curved {
+    position: relative;
+    background: #d1dee6;
+    height: 7vh;
+    border-bottom-left-radius: 50% 20%;
+    border-bottom-right-radius: 50% 20%;
+  }
+
+  .body {
+    background-image: repeating-linear-gradient(135deg, rgba(0,0,0, 0.1) 0px, rgba(0,0,0, 0.1) 2px,transparent 2px, transparent 4px),linear-gradient(90deg, rgb(254,254,254),rgb(254,254,254));
+
+  }
