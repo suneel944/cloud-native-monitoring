@@ -8,7 +8,8 @@ env:
   ECR_REPOSITORY_NAME: cloud-monitoring-app
   EKS_CLUSTER_NAME: cloud-monitoring-app-cluster
   EKS_NODEGROUP_NAME: cloud-monitoring-nodegroup
-  KUBECONFIG_PATH: '${{ github.workspace }}/kubeconfig.yml'
+  KUBE_DEPLOYMENT_CONFIG: '${{ github.workspace }}/eks/deployment.yml'
+  KUBE_SERVICE_CONFIG: "${{ github.workspace }}/eks/service.yml"
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -50,8 +51,6 @@ jobs:
         run: |
           aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --no-cli-pager
       - name: Deploy to EKS
-        env:
-          KUBECONFIG: '${{ env.KUBECONFIG_PATH }}'
-        run:
-          kubectl apply -f eks/deployment.yml
-          kubectl apply -f eks/service.yml
+        run: |
+          kubectl apply -f ${{ env.KUBE_DEPLOYMENT_CONFIG }}
+          kubectl apply -f ${{ env.KUBE_SERVICE_CONFIG }}
