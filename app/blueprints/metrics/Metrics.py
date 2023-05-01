@@ -1,6 +1,5 @@
 import psutil
-from flask import Blueprint, jsonify
-from werkzeug.exceptions import InternalServerError
+from flask import Blueprint
 
 
 metrics_bp = Blueprint("metrics", __name__)

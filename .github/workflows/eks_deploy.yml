@@ -8,10 +8,6 @@ env:
   ECR_REPOSITORY_NAME: cloud-monitoring-app
   EKS_CLUSTER_NAME: cloud-monitoring-app-cluster
   EKS_NODEGROUP_NAME: cloud-monitoring-nodegroup
-  EKS_NODEGROUP_INSTANCE_TYPE: t2.micro
-  EKS_NODEGROUP_DESIRED_SIZE: 2
-  EKS_NODEGROUP_MAX_SIZE: 2
-  EKS_NODEGROUP_AMI_TYPE: AL2_x86_64
   KUBECONFIG_PATH: '${{ github.workspace }}/kubeconfig.yml'
 jobs:
   deploy:
@@ -22,9 +18,6 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
         id: install
-      - name: Install AWS CLI prerequisite
-        run: >
-          sudo apt-get update && sudo apt-get install -yy less
       - name: Install AWS CLI
         id: install-aws-cli
         uses: unfor19/install-aws-cli-action@v1
@@ -32,6 +25,9 @@ jobs:
           version: 2
           verbose: false
           arch: amd64
+      - name: Disable AWS CLI pager
+        run:
+          export AWS_PAGER=""
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -41,55 +37,21 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-      - name: Create ECR repository if it does not exist
-        id: ecr
-        run: >
-          if ! aws ecr describe-repositories --repository-names ${{
-          env.ECR_REPOSITORY_NAME }} --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
-            aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY_NAME }} --region ${{ env.AWS_REGION }}
-          else
-            echo "ECR repository already exists, skipping creation."
-          fi
       - name: 'Build, tag, and push docker image to Amazon ECR'
-        run: >
-          echo ${{ steps.login-ecr.outputs.registry }}/${{
-          env.ECR_REPOSITORY_NAME }}:latest
-
-          docker build -t ${{ steps.login-ecr.outputs.registry }}/${{
-          env.ECR_REPOSITORY_NAME }}:latest .
-
-          docker push ${{ steps.login-ecr.outputs.registry }}/${{
-          env.ECR_REPOSITORY_NAME }}:latest
-      - name: Create or Get EKS cluster
-        run: >
-          if ! aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION >/dev/null 2>&1; then
-            ROLE_ARN=$(aws iam get-role --role-name "${{ secrets.EKS_CLUSTER_ROLE }}" --query 'Role.Arn' --output text)
-            aws eks create-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --role-arn $ROLE_ARN --resources-vpc-config subnetIds=${{ secrets.AWS_SUBNET_IDS }}
-            ,securityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }} --no-cli-pager
-          fi
-      - name: Wait for cluster state to become active
-        run: >
-          # Wait for the cluster to become active
-          while [[ "$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query 'cluster.status' --output text)" != "ACTIVE" ]]; do
-            echo "waiting for cluster activation"
-            sleep 60
-          done
-      - name: Create EKS node group
-        run: >
-          aws eks create-nodegroup --cluster-name $EKS_CLUSTER_NAME
-          --nodegroup-name $EKS_NODEGROUP_NAME --node-role ${{
-          secrets.EKS_NODE_ROLE }} --instance-types $EKS_NODEGROUP_INSTANCE_TYPE
-          $EKS_NODEGROUP_MAX_SIZE --ami-type $EKS_NODEGROUP_AMI_TYPE --region
-          $AWS_REGION --subnets ${{ secrets.AWS_SUBNET_IDS }} --no-cli-pager
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_NAME }}:$IMAGE_TAG -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_NAME }}:latest .
+          docker push -a $ECR_REGISTRY/${{ env.ECR_REPOSITORY_NAME }}
       - name: Update kubeconfig
         env:
-          EKS_CLUSTER_ARN: $(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query 'cluster.arn' --output text)
-        run: >
-          aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
-          
-          kubectl config use-context $EKS_CLUSTER_ARN
+          EKS_CLUSTER_ARN: $(aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --query 'cluster.arn' --output text --no-cli-pager)
+        run: |
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --no-cli-pager
       - name: Deploy to EKS
         env:
           KUBECONFIG: '${{ env.KUBECONFIG_PATH }}'
-        run: >
-          kubectl apply -f myapp.yaml --namespace=$KUBE_NAMESPACE
+        run:
+          kubectl apply -f eks/deployment.yml
+          kubectl apply -f eks/service.yml

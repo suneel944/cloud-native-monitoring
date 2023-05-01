@@ -12,7 +12,7 @@ def stream_data_to_dashboard():
     def generate():
         import json
         from time import sleep
-        from src.app.blueprints.metrics.Metrics import retrive_metrics
+        from app.blueprints.metrics.Metrics import retrive_metrics
         while True:
             data = retrive_metrics()
             # \n\n is provided to indicate end of sse (server-sent-event)
